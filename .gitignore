@@ -1,0 +1,4 @@
+.Rhistory
+*.swp
+.ipynb_checkpoints/
+intro_data_analysis/
