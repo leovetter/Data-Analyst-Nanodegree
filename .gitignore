@@ -2,3 +2,5 @@
 *.swp
 .ipynb_checkpoints/
 intro_data_analysis/
+wrangle_openstreetmap/__pycache__/
+wrangle_openstreetmap/nancy_france.osm
