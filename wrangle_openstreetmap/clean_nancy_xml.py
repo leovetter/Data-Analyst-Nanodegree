@@ -58,9 +58,11 @@ def shape_element(element):
                     value = city_mapping[elem.attrib['v']]
                     address[key] = value
                 elif key == 'street' and elem.attrib['v'] in street_mapping:
-                    value = street_mapping(elem.attrib['v'])
+                    value = street_mapping[elem.attrib['v']]
                     address[key] = value
                 else:
+                    # print(elem.attrib['v'])
+                    # print(elem.attrib['v'].capitalize())
                     address[key] = elem.attrib['v'].capitalize()
             else:
                 node[elem.attrib['k']] = elem.attrib['v']
@@ -91,6 +93,7 @@ def process_map():
         # Format the element to a suitable format for mongodb
         el = shape_element(element)
 
+        if el != None:
             # Insert the parsed element into the db
             if el['type'] == 'node':
                 db.nodes.insert_one(el)

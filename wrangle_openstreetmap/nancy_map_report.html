@@ -174,7 +174,8 @@ div#notebook {
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h1 align="center"><font color="#000066" size="6">OpenStreetMap Data Wrangling Project</font></h1>
+<h1 align="center"><font color="#000066" size="6">OpenStreetMap Data Wrangling Project</font></h1><p>For this project I chose to investigate data about the city Nancy located in France which is my hometown.</p>
+
 </div>
 </div>
 </div>
@@ -183,15 +184,25 @@ div#notebook {
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h1 id="1.-Problems-Encountered-in-the-Map">1. Problems Encountered in the Map<a class="anchor-link" href="#1.-Problems-Encountered-in-the-Map">&#182;</a></h1><p>The major problem I encountered was that different names was used for the same city or the same street. For instance the city "Vandoeuvre-lès-Nancy" had these four differents spellings :</p>
+<h1 id="1.-Problems-Encountered-in-the-Map">1. Problems Encountered in the Map<a class="anchor-link" href="#1.-Problems-Encountered-in-the-Map">&#182;</a></h1><h4 id="a)-Names-misspelled">a) Names misspelled<a class="anchor-link" href="#a)-Names-misspelled">&#182;</a></h4><p>The major problem I encountered was that different names was used for the same city or the same street. For instance the city "Vandoeuvre-lès-Nancy" had these four differents spellings :</p>
 <ul>
 <li>Vandoeuvre-les-Nancy</li>
 <li>Vandoeuvre-lès-Nancy</li>
 <li>Vandœuvre-lès-Nancy</li>
-<li>Vandoeuvre les Nancy
-So I made sure to update these names to an common name before inserting them into mongodb. </li>
+<li>Vandoeuvre les Nancy</li>
 </ul>
-<p>I didn't need to parse any other attributes as they were already in a correct format (date was in a format understandable by mongodb, postcode was accurate...).</p>
+<p>So I made sure to update these names to an common name before inserting them into mongodb.</p>
+<h4 id="b)-Street-names-not-capitalized">b) Street names not capitalized<a class="anchor-link" href="#b)-Street-names-not-capitalized">&#182;</a></h4><p>Some street name were starting with a lower letter and others with upper letters so I updated them programatically with the <code>capitalize</code> python function before inserting them into mongodb.</p>
+<h4 id="c)-Postal-codes-not-corresponding-to-Nancy">c) Postal codes not corresponding to Nancy<a class="anchor-link" href="#c)-Postal-codes-not-corresponding-to-Nancy">&#182;</a></h4><p>A simple query <code>db.nodes.distinct('address.postcode', {})</code> show that postal code have all a correct format but does not correspond all to the postal code of Nancy. After it appears that the data concern not only the city of Nancy but also the suburban area. Below is a count of the node for each postal code :</p>
+
+<pre><code>db.nodes.aggregate([{ $group: {_id:"$address.postcode", count: {$sum: 1}}} ])
+
+{ "_id" : "54770", "count" : 3 }
+{ "_id" : "54425", "count" : 3 }
+{ "_id" : "54270", "count" : 3 }
+{ "_id" : "54320", "count" : 2 }
+...</code></pre>
+<p>It appears that very few documents include postal codes.</p>
 <h1 id="2-Data-Overview">2 Data Overview<a class="anchor-link" href="#2-Data-Overview">&#182;</a></h1><h4 id="size-of-the-file-:">size of the file :<a class="anchor-link" href="#size-of-the-file-:">&#182;</a></h4><p>nancy_france.osm : 148M</p>
 <h4 id="number-of-unique-users-:">number of unique users :<a class="anchor-link" href="#number-of-unique-users-:">&#182;</a></h4>
 <pre><code>&gt; db.nodes.distinct('created.user').length
@@ -225,7 +236,7 @@ So I made sure to update these names to an common name before inserting them int
     .
     .
 ]</code></pre>
-<p>So an improvement over the data could be to correctly assign to each node its city. To do that the location (latitude and longitude) stored with each node could be used.</p>
+<p>So an improvement over the data could be to correctly assign to each node its city. To do that the location (latitude and longitude) stored with each node could be used. Furthermore we would need to know for each city its coordinates. Theses coordinates could be retrieved from wikipedia for example.</p>
 
 </div>
 </div>
