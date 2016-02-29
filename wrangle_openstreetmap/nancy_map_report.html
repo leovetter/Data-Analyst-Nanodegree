@@ -193,7 +193,13 @@ div#notebook {
 </ul>
 <p>So I made sure to update these names to an common name before inserting them into mongodb.</p>
 <h4 id="b)-Street-names-not-capitalized">b) Street names not capitalized<a class="anchor-link" href="#b)-Street-names-not-capitalized">&#182;</a></h4><p>Some street name were starting with a lower letter and others with upper letters so I updated them programatically with the <code>capitalize</code> python function before inserting them into mongodb.</p>
-<h4 id="c)-Postal-codes-not-corresponding-to-Nancy">c) Postal codes not corresponding to Nancy<a class="anchor-link" href="#c)-Postal-codes-not-corresponding-to-Nancy">&#182;</a></h4><p>A simple query <code>db.nodes.distinct('address.postcode', {})</code> show that postal code have all a correct format but does not correspond all to the postal code of Nancy. After it appears that the data concern not only the city of Nancy but also the suburban area. Below is a count of the node for each postal code :</p>
+<h4 id="c)-Postal-codes-not-corresponding-to-Nancy">c) Postal codes not corresponding to Nancy<a class="anchor-link" href="#c)-Postal-codes-not-corresponding-to-Nancy">&#182;</a></h4><p>Before inserting postal codes into the database I implemented a routine to check that all of them have a consistent format. Postal code for Nancy and its suburbs are all beginning with '54' and is followed by three digits. So the code is :</p>
+
+<pre><code>import re
+
+p = re.compile('54[0-9]{3}\\b')
+p.match('postal_code')</code></pre>
+<p>Postal codes that didn't match were not inserted into the database and written out in a separate file for further inspection. Surprisingly none of the postal codes were inconsistent. A simple database query <code>db.nodes.distinct('address.postcode', {})</code> confirm that postal codes have all a correct format but does not correspond all to the postal code of Nancy. After it appears that the data concern not only the city of Nancy but also the suburban area. Below is a count of the node for each postal code :</p>
 
 <pre><code>db.nodes.aggregate([{ $group: {_id:"$address.postcode", count: {$sum: 1}}} ])
 
@@ -203,6 +209,11 @@ div#notebook {
 { "_id" : "54320", "count" : 2 }
 ...</code></pre>
 <p>It appears that very few documents include postal codes.</p>
+<h4 id="d)-Timestamp-consistency">d) Timestamp consistency<a class="anchor-link" href="#d)-Timestamp-consistency">&#182;</a></h4><p>The consistency of the timestamps were checked using the same procedure than for postal code. So a regex was used to assure that their format is correct and inconsistent timestamps are written out in a separate file. The folowing regex is used :</p>
+
+<pre><code>t = re.compile('[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z')
+t.match('timestamp')</code></pre>
+<p>Once again no inconsistent timestamps were found.</p>
 <h1 id="2-Data-Overview">2 Data Overview<a class="anchor-link" href="#2-Data-Overview">&#182;</a></h1><h4 id="size-of-the-file-:">size of the file :<a class="anchor-link" href="#size-of-the-file-:">&#182;</a></h4><p>nancy_france.osm : 148M</p>
 <h4 id="number-of-unique-users-:">number of unique users :<a class="anchor-link" href="#number-of-unique-users-:">&#182;</a></h4>
 <pre><code>&gt; db.nodes.distinct('created.user').length
@@ -236,7 +247,16 @@ div#notebook {
     .
     .
 ]</code></pre>
-<p>So an improvement over the data could be to correctly assign to each node its city. To do that the location (latitude and longitude) stored with each node could be used. Furthermore we would need to know for each city its coordinates. Theses coordinates could be retrieved from wikipedia for example.</p>
+<p>So an improvement over the data could be to correctly assign to each node its city. To do that the location (latitude and longitude) stored with each node could be used. For example the following code show how the adress of a node can be obtained using the <a href="https://github.com/geopy/geopy">geopy</a> python library :</p>
+
+<pre><code>from geopy.geocoders import Nominatim
+
+geolocator = Nominatim()
+location = geolocator.reverse("48.7040581, 6.1336632")
+print(location.address)
+
+"A 31, Maxéville, Nancy, Meurthe-et-Moselle, Alsace-Champagne-Ardenne-Lorraine, France métropolitaine, 54320, France"</code></pre>
+<p>The coordinates used here are real coordinates stored in our database and we can observe that the library correctly returns meaningfull informations such as the name of the city (Maxéville), the postal code (54320), the street name (A 31)... Behind the scene the library is relying on several APIs ( Google Geocoding API,  OpenStreetMap Nominatim, Bing Maps API...).</p>
 
 </div>
 </div>

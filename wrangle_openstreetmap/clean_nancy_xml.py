@@ -1,6 +1,7 @@
 import xml.etree.cElementTree as ET
 import pprint
 from pymongo import MongoClient
+import re
 
 # Needed to update the names of cities that are misspelled
 city_mapping = {
@@ -36,6 +37,13 @@ def shape_element(element):
         created = dict([(i, attribs[i]) for i in wanted_keys if i in attribs])
         node['created'] = created
 
+        # Check timestamp consistency
+        t = re.compile('[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z')
+        if t.match(created['timestamp']) == None:
+            wrong_timestamp = open("wrong_timestamp.txt", "a")
+            wrong_timestamp.write(str(created['timestamp'])+'\n')
+            wrong_timestamp.close()
+
         # Create sub-element 'position' with the informations about the location of the element
         if 'lat' in attribs:
             node['pos'] = [float(attribs['lat']), float(attribs['lon'])]
@@ -60,9 +68,16 @@ def shape_element(element):
                 elif key == 'street' and elem.attrib['v'] in street_mapping:
                     value = street_mapping[elem.attrib['v']]
                     address[key] = value
+                elif key == 'postcode':
+                    # Check that postal code is consisten
+                    p = re.compile('54[0-9]{3}\\b')
+                    if p.match(elem.attrib['v']) != None:
+                        address[key] = elem.attrib['v']
+                    else:
+                        wrong_code = open("wrong_code.txt", "a")
+                        wrong_code.write(str(elem.attrib['v'])+'\n')
+                        wrong_code.close()
                 else:
-                    # print(elem.attrib['v'])
-                    # print(elem.attrib['v'].capitalize())
                     address[key] = elem.attrib['v'].capitalize()
             else:
                 node[elem.attrib['k']] = elem.attrib['v']
